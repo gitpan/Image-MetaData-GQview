@@ -1,0 +1,7 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/Image-MetaData-GQview.t
+lib/Image/MetaData/GQview.pm
+META.yml                                 Module meta-data (added by MakeMaker)

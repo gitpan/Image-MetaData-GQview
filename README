@@ -1,0 +1,81 @@
+Image-MetaData-GQview version 1.1
+==================================
+
+The README is used to introduce the module and provide instructions on
+how to install the module, any machine dependencies it may have (for
+example C compilers and installed libraries) and any other information
+that should be provided before the module is installed.
+
+SYNOPSIS
+
+         use Image::MetaData::GQview;
+         my $md = Image::MetaData::GQview->new("test.jpg");
+         $md->load("test.jpg");
+         my $comment = $md->comment;
+         my @keywords = $md->keywords;
+         my $raw = $md->raw;
+         $md->comment("This is a comment");
+         $md->keywords(@keywords);
+         $md->save("test.jpg");
+
+DESCRIPTION
+
+This module is a abstraction to the image meta data of GQview.
+
+METHODS
+
+   new
+      This is a class method and the only one. It is used to get a object
+      of Image::MetaData::GQview. It can be called without parameter or
+      with the image as only option in witch case it try to load the meta
+      data.
+
+   load
+      If you didn't load the data with new you can do that with this
+      method. If the parameter is left out the one setted before is used.
+
+   comment
+      Get or set the comment.
+
+   keywords
+      Get or set the keywords.
+
+   raw
+      Get the raw data
+
+   save
+      Save the data to disk. This will read the location from the gqview
+      configuration. If there is none, the info will be saved in local
+      directory.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+COPYRIGHT
+
+Copyright (c) 2006 by Klaus Ethgen. All rights reserved.
+
+LICENSE
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 675 Mass
+Ave, Cambridge, MA 02139, USA.
+
+AUTHOR
+
+Klaus Ethgen <Klaus@Ethgen.de>
