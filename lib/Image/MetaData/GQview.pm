@@ -8,8 +8,8 @@ use Cwd qw(abs_path);
 
 use vars qw($RCS_VERSION $VERSION);
 
-$RCS_VERSION = '$Id: GQview.pm,v 1.1 2006/08/08 22:55:30 klaus Exp $';
-($VERSION = '$Revision: 1.1 $') =~ s/^\D*([\d.]*)\D*$/$1/;
+$RCS_VERSION = '$Id: GQview.pm,v 1.2 2006/08/09 19:56:35 klaus Exp $';
+($VERSION = '$Revision: 1.2 $') =~ s/^\D*([\d.]*)\D*$/$1/;
 
 sub new
 {
@@ -277,14 +277,6 @@ Manpage of gqview
 =head1 AUTHOR
 
 S<Klaus Ethgen E<lt>Klaus@Ethgen.deE<gt>>
-
-=head1 COPYRIGHT AND LICENSE
-
-Copyright (C) 2006 by Klaus Ethgen
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.8 or,
-at your option, any later version of Perl 5 you may have available.
 
 =head1 COPYRIGHT
 
