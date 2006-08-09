@@ -8,8 +8,8 @@ use Cwd qw(abs_path);
 
 use vars qw($RCS_VERSION $VERSION);
 
-$RCS_VERSION = '$Id: GQview.pm,v 1.2 2006/08/09 19:56:35 klaus Exp $';
-($VERSION = '$Revision: 1.2 $') =~ s/^\D*([\d.]*)\D*$/$1/;
+$RCS_VERSION = '$Id: GQview.pm,v 1.3 2006/08/09 20:42:39 klaus Exp $';
+($VERSION = '$Revision: 1.3 $') =~ s/^\D*([\d.]*)\D*$/$1/;
 
 sub new
 {
