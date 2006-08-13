@@ -59,8 +59,8 @@ All internal errors will trow an error!
 
 use vars qw($RCS_VERSION $VERSION);
 
-$RCS_VERSION = '$Id: GQview.pm,v 1.5 2006/08/13 14:52:26 klaus Exp $';
-($VERSION = '$Revision: 1.5 $') =~ s/^\D*([\d.]*)\D*$/$1/;
+$RCS_VERSION = '$Id: GQview.pm,v 1.6 2006/08/13 15:50:26 klaus Exp $';
+($VERSION = '$Revision: 1.6 $') =~ s/^\D*([\d.]*)\D*$/$1/;
 
 =item new
 
@@ -143,7 +143,7 @@ sub load
    #
    # #end
    my $select = join("|", @{$self->{fields}});
-   my @fields_ext = split(/^\[\Q($select)\E\]\n/m, $self->{metadata});
+   my @fields_ext = split(/^\[($select)\]\n/m, $self->{metadata});
 
    # trow away the head
    shift @fields_ext;
@@ -187,7 +187,7 @@ sub keywords
 
    $self->set_field('keywords', @_) if @_;
 
-   my @keywords = grep { $_ } $self->get_field('comment');
+   my @keywords = grep { $_ } $self->get_field('keywords');
 
    return @keywords;
 }   # keywords

@@ -1,5 +1,9 @@
 Revision history for Image::MetaData::GQview
 
+1.6 Klaus Ethgen <Klaus@Ethgen.de>
+
+	* I should test also the read of the data.
+
 1.5 Klaus Ethgen <Klaus@Ethgen.de>
 
 	* Add the possibility to add new fields in future
