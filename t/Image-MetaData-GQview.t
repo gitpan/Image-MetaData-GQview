@@ -1,9 +1,9 @@
 #!perl -T
 #
-# $Id: Image-MetaData-GQview.t,v 1.4 2006/08/13 15:50:26 klaus Exp $
+# $Id: Image-MetaData-GQview.t,v 1.5 2006/08/13 16:38:53 klaus Exp $
 #
 
-use Test::More tests => 12;
+use Test::More tests => 13;
 
 use Image::MetaData::GQview;
 
@@ -27,12 +27,13 @@ ok(!$@, "Setting Keywords ($@)");
 ok(eval {$md->save('test.jpg', 'test.jpg.meta')}, 'save("test.jpg", ".metadata/test.jpg.meta")');
 ok(!$@, "Save ($@)");
 
-my $md2 = eval {Image::MetaData::GQview->new};
+my $md2 = eval {Image::MetaData::GQview->new({fields => [qw(keywords comment test)]})};
+ok(!$@, "Instanting the class with options ($@)");
 eval {$md2->load('test.jpg', 'test.jpg.meta')};
 ok(!$@, "Load a file ($@)");
 
-is($md2->comment, "This is a comment\n", "Comment correct written and read?");
-my %kw = map {($_ => $_)} $md2->keywords;
+is(eval {$md2->comment}, "This is a comment\n", "Comment correct written and read?");
+my %kw = map {($_ => $_)} eval {$md2->keywords};
 ok(($kw{bar} && $kw{foo} && !$kw{gna}), "Keywords correct written and read?");
 
 # Clean up ...

@@ -59,8 +59,8 @@ All internal errors will trow an error!
 
 use vars qw($RCS_VERSION $VERSION);
 
-$RCS_VERSION = '$Id: GQview.pm,v 1.6 2006/08/13 15:50:26 klaus Exp $';
-($VERSION = '$Revision: 1.6 $') =~ s/^\D*([\d.]*)\D*$/$1/;
+$RCS_VERSION = '$Id: GQview.pm,v 1.7 2006/08/13 16:38:53 klaus Exp $';
+($VERSION = '$Revision: 1.7 $') =~ s/^\D*([\d.]*)\D*$/$1/;
 
 =item new
 
@@ -77,7 +77,11 @@ sub new
    my $file  = shift;
    my $opts  = shift || {};
 
-   $opts = $file if ref($file) eq 'HASH';
+   if (ref($file) eq 'HASH')
+   {
+      $opts = $file;
+      $file = undef;
+   }
 
    my $self = {fields => [qw(keywords comment)],};
    $self->{opts}->{file} = $file if $file;
@@ -313,7 +317,7 @@ sub get_field
       "get_field has to be called with a known field '$field' as first parameter"
    ) unless grep (/^\Q$field\E$/s, @{$self->{fields}});
 
-   my $data = $self->{data}->{$field};
+   my $data = $self->{data}->{$field} || "";
    $data =~ s/\n*\z//;
 
    return wantarray ? split(/\n/, $data) : "$data\n";

@@ -1,8 +1,13 @@
 Revision history for Image::MetaData::GQview
 
+1.7 Klaus Ethgen <Klaus@Ethgen.de>
+
+	* Make it a bit more fault tolerant (Hmpf, this seems to be not
+	  possible to test)
+
 1.6 Klaus Ethgen <Klaus@Ethgen.de>
 
-	* I should test also the read of the data.
+	* I should test also the read of the data
 
 1.5 Klaus Ethgen <Klaus@Ethgen.de>
 
@@ -25,6 +30,6 @@ Revision history for Image::MetaData::GQview
 
 1.1 Tue Aug 8 Klaus Ethgen <Klaus@Ethgen.de>
 
-	* First version, released on an unsuspecting world.
+	* First version, released on an unsuspecting world
 
 vim: ft=changelog
