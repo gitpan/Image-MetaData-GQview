@@ -1,11 +1,14 @@
-use 5.008008;
+use strict;
+use warnings;
 use ExtUtils::MakeMaker;
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
+
 WriteMakefile(
-    NAME              => 'Image::MetaData::GQview',
-    VERSION_FROM      => 'lib/Image/MetaData/GQview.pm', # finds $VERSION
-    ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM  => 'lib/Image/MetaData/GQview.pm', # retrieve abstract from module
-       AUTHOR         => 'Klaus Ethgen <Klaus@Ethgen.de>') : ()),
+   NAME          => 'Image::MetaData::GQview',
+   AUTHOR        => 'Klaus Ethgen <Klaus@Ethgen.de>',
+   VERSION_FROM  => 'lib/Image/MetaData/GQview.pm',
+   ABSTRACT_FROM => 'lib/Image/MetaData/GQview.pm',
+   PL_FILES      => {},
+   PREREQ_PM     => {'Test::More' => 0,},
+   dist          => {COMPRESS => 'gzip -9f', SUFFIX => 'gz',},
+   clean         => {FILES => 'Image-MetaData-GQview-*'},
 );

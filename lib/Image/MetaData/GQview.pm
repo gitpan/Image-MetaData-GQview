@@ -1,56 +1,135 @@
 package Image::MetaData::GQview;
 
-use 5.008008;
 use strict;
 use warnings;
 
+use Carp;
+use Fatal qw(:void open close);
 use Cwd qw(abs_path);
+
+=head1 NAME
+
+Image::MetaData::GQview - Perl extension for GQview image metadata
+
+=head1 SYNOPSIS
+
+   use Image::MetaData::GQview;
+ 
+   my $md = Image::MetaData::GQview->new("test.jpg");
+   my $md2 = Image::MetaData::GQview->new("test2.jpg", {fields => ['keywords', 'comment', 'picture info']});
+   my $md3 = Image::MetaData::GQview->new({file => "test2.jpg", fields => ['keywords', 'comment', 'picture info']});
+   $md->load("test.jpg");
+   my $comment = $md->comment;
+   my @keywords = $md->keywords;
+   my $raw = $md->raw;
+   $md->comment("This is a comment");
+   $md->keywords(@keywords);
+   $md->save("test.jpg");
+
+=head1 DESCRIPTION
+
+This module is a abstraction to the image meta data of GQview.
+
+All internal errors will trow an error!
+
+=head2 METHODS
+
+=over
+
+=cut
+
+# Use the following for perltidy:
+#-i=3	# Indent 3
+#-pt=2	# Klammerhandling
+#-sbt=2	# Klammerhandling
+#-bt=2	# Klammerhandling
+#-ci=3	# Indent bei mehrzeiligen Zeilen
+#-isbc	# Indent nur schon eingerückte Kommentare
+#-olc	# Lange Blockkommentare haben keinen Indent
+#-nolq	# Kein Indent bei langen Quotes entfernen
+#-nbbb	# Keine Leerzeilen vor Blöcken
+#-cti=1	# Schliesende Klammer in Höhe der öffnenden
+#-bl	# Öffnende Klammern in neuer Zeile
+#-et=8	# Komprimiere 8 Space zu einem Tab
+#-se	# Fehler auf STDERR
+#-w	# Warnings als Error
+#-syn	# Check Syntax
+#-msc=3	# Kommentarabstand
+#-nsfs	# Kein Space vor Semikolon
 
 use vars qw($RCS_VERSION $VERSION);
 
-$RCS_VERSION = '$Id: GQview.pm,v 1.3 2006/08/09 20:42:39 klaus Exp $';
-($VERSION = '$Revision: 1.3 $') =~ s/^\D*([\d.]*)\D*$/$1/;
+$RCS_VERSION = '$Id: GQview.pm,v 1.5 2006/08/13 14:52:26 klaus Exp $';
+($VERSION = '$Revision: 1.5 $') =~ s/^\D*([\d.]*)\D*$/$1/;
+
+=item new
+
+This is a class method and the only one. It is used to get a object of Image::MetaData::GQview. It can be called without parameter or with the image as only option in witch case it try to load the meta data.
+
+You can provide a hash reference as second or as only parameter which specify file and/or fields. The fields are default "keywords" and "comment" in this order.
+
+=cut
 
 sub new
 {
    my $param = shift;
    my $class = ref($param) || $param;
-   my $file = shift;
+   my $file  = shift;
+   my $opts  = shift || {};
 
-   my $self = {};
+   $opts = $file if ref($file) eq 'HASH';
+
+   my $self = {fields => [qw(keywords comment)],};
+   $self->{opts}->{file} = $file if $file;
 
    bless $self, $class;
 
-   $self->{error} = undef;
+   foreach (qw(file fields))
+   {
+      $self->{$_} = $opts->{$_} if exists($opts->{$_});
+   }
+
+   $file = $self->{opts}->{file};
+
    $self->load($file) if $file;
 
    return $self;
-} # new
+}   # new
+
+=item load
+
+If you didn't load the data with new you can do that with this method. If the parameter is left out the one setted before is used.
+
+You can also specify the location for the meta file as second parameter.
+
+=cut
 
 sub load
 {
-   my $self = shift;
-   my $image = shift || $self->{imagefile};
+   my $self     = shift;
+   my $image    = shift || $self->{imagefile};
+   my $metafile = shift;
 
-   return $self->_error(undef, "No File given") unless $image;
+   croak("No File given!") unless $image;
    $image = abs_path($image);
-   return $self->_error(undef, "No such file") unless -e $image;
+   croak("No such file ($image)!") unless -e $image;
 
    $self->{imagefile} = $image;
 
-   (my $metadata1 = $image) =~ s#/([^/]*)$#/.metadata/$1.meta#;
-   my $metadata2 = abs_path($ENV{HOME}) . ".gqview/metadata$image.meta";
+   unless ($metafile)
+   {
+      (my $metadata1 = $image) =~ s#/([^/]*)$#/.metadata/$1.meta#;
+      my $metadata2 = abs_path($ENV{HOME}) . ".gqview/metadata$image.meta";
 
-   my $metadata;
-   $metadata = $metadata1 if -r $metadata1;
-   $metadata ||= $metadata2 if -r $metadata2;
-   $self->{metafile} = $metadata;
+      $metafile = $metadata1 if -r $metadata1;
+      $metafile ||= $metadata2 if -r $metadata2;
+   }
+   $self->{metafile} = $metafile;
 
-   return $self->_error(undef, "No metadata found") unless $metadata;
+   croak("No metadata found for image '$image'!") unless $metafile;
 
-   open my $in, "<:utf8", $metadata or return $self->_error(undef, "Unable to read metafile");
-   local $/ = undef;
-   $self->{metadata} = <$in>;
+   open my $in, "<:utf8", $metafile;
+   $self->{metadata} = do { local $/ = undef; <$in> };
    close $in;
 
    # Aufbau:
@@ -63,76 +142,96 @@ sub load
    # ...
    #
    # #end
-   if ($self->{metadata} =~ /^\[keywords]\n([^\[\]]*)\n\n/ms)
-   {
-      # Found Keywords
-      @{$self->{keywords}} = split(/\n/, $1);
-      @{$self->{keywords}} = grep {$_} @{$self->{keywords}};
-   }
-   if ($self->{metadata} =~ /^\[comment]\n(.*\n)\n#end/ms)
-   {
-      $self->{comment} = $1;
-   }
+   my $select = join("|", @{$self->{fields}});
+   my @fields_ext = split(/^\[\Q($select)\E\]\n/m, $self->{metadata});
 
-   $self->{error} = undef;
+   # trow away the head
+   shift @fields_ext;
+   die "Internal Error: Metadata are not parsable" if (@fields_ext % 2) != 0;
+
+   # Cleanup the last field if it exists
+   $fields_ext[-1] =~ s/\n*#end\n?\z/\n/ if @fields_ext > 0;
+
+   # Now they can be put into $self
+   my %fields = @fields_ext;
+   $self->{data} = \%fields;
+
    return 1;
-} # load
+}   # load
+
+=item comment
+
+Get or set the comment.
+
+=cut
 
 sub comment
 {
-   my $self = shift;
+   my $self    = shift;
    my $comment = shift;
 
-   if ($comment)
-   {
-      $self->{comment} = $comment;
-      $self->_sync;
-   }
+   $self->set_field('comment', $comment) if $comment;
 
-   $self->{error} = undef;
-   return $self->{comment};
-} # comment
+   return scalar($self->get_field('comment'));
+}   # comment
+
+=item keywords
+
+Get or set the keywords. This is the preferred method for the keywords as it shift out empty keywords.
+
+=cut
 
 sub keywords
 {
    my $self = shift;
 
-   if (@_)
-   {
-      $self->{keywords} = [@_];
-      $self->_sync;
-   }
+   $self->set_field('keywords', @_) if @_;
 
-   $self->{error} = undef;
-   return @{$self->{keywords}};
-} # keywords
+   my @keywords = grep { $_ } $self->get_field('comment');
+
+   return @keywords;
+}   # keywords
+
+=item raw
+
+Get the raw data
+
+=cut
 
 sub raw
 {
    my $self = shift;
 
-   $self->{error} = undef;
    return $self->{metadata};
-} # raw
+}   # raw
+
+=item save
+
+Save the data to disk. This will read the location from the gqview configuration. If there is none, the info will be saved in local directory.
+
+You can also specify the location for the meta file as second parameter.
+
+=cut
 
 sub save
 {
-   my $self = shift;
-   my $image = shift;
-   my $newimage = $image;
-   $image ||= $self->{imagefile};
-   my $metafile = shift;
+   my $self        = shift;
+   my $image       = shift;
+   my $newimage    = $image;
+   my $metafile    = shift;
    my $newmetafile = $metafile;
+   $image    ||= $self->{imagefile};
    $metafile ||= $self->{metafile};
 
-   return $self->_error(undef, "No File given") unless $image;
+   croak("No File given!") unless $image;
    $image = abs_path($image);
-   return $self->_error(undef, "No such file") unless -e $image;
+   croak("No such file ($image)!") unless -e $image;
 
    (my $metadata1 = $image) =~ s#/([^/]*)$#/.metadata/$1.meta#;
    my $metadata2 = abs_path($ENV{HOME}) . ".gqview/metadata$image.meta";
 
    my $metadata;
+
    # Read the gqviewrc
    if (open my $in, "<", $ENV{HOME} . "/.gqview/gqviewrc")
    {
@@ -147,7 +246,7 @@ sub save
 	 }
       }
       close $in;
-   } # if (open my $in, "<", $ENV...
+   }   # if (open my $in, "<", $ENV...
    if ($newimage and not $newmetafile)
    {
       $metafile = $metadata;
@@ -168,7 +267,7 @@ sub save
    }
    if ($false and not $newmetafile and $metafile ne $metadata2)
    {
-      $false = 0;
+      $false    = 0;
       $metafile = $metadata2;
       @metadirs = split(/\//, $metadata2);
       pop @metadirs;
@@ -182,107 +281,148 @@ sub save
 	    last;
 	 }
       }
-   } # if ($false and not $newmetafil...
-   if ($false)
-   {
-      return $self->_error(undef, "Cannot create directory structure for meta file");
-   }
-   open my $meta, ">:utf8", $metafile or return $self->_error(undef, $!);
-   print $meta $self->raw or return $self->_error(undef, $!);
-   close $meta or $self->_error(undef, $!);
+   }   # if ($false and not $newmetafil...
+   croak("Cannot create directory structure for meta file '$metafile'!")
+      if ($false);
+   open my $meta, ">:utf8", $metafile;
+   print $meta $self->raw or die("Faulty metadata");
+   close $meta;
 
    $self->{imagefile} = $image;
-   $self->{metafile} = $metafile;
-   $self->{error} = undef;
+   $self->{metafile}  = $metafile;
+
    return 1;
-} # save
+}   # save
+
+=item get_field
+
+This will extract the information of one field and return it as single sting (in scalar context) or as array splitted in lines.
+
+Please note, it array context also empty lines can be returned!
+
+=cut
+
+sub get_field
+{
+   my $self  = shift;
+   my $field = shift
+      || croak(
+      "get_field has to be called with a field as the first parameter");
+
+   croak(
+      "get_field has to be called with a known field '$field' as first parameter"
+   ) unless grep (/^\Q$field\E$/s, @{$self->{fields}});
+
+   my $data = $self->{data}->{$field};
+   $data =~ s/\n*\z//;
+
+   return wantarray ? split(/\n/, $data) : "$data\n";
+}   # get_field
+
+=item set_field
+
+Well, of cause if you can get a field you have to be able to set it.
+
+The arguments are the field name and the data.
+
+The data can be a single value or a array.
+
+=cut
+
+sub set_field
+{
+   my $self  = shift;
+   my $field = shift
+      || croak(
+      "set_field has to be called with a field as the first parameter");
+
+   croak(
+      "set_field has to be called with a known field '$field' }as first parameter"
+   ) unless grep (/^\Q$field\E$/s, @{$self->{fields}});
+
+   my $data = join("\n", @_);
+   $data =~ s/\n*\z/\n/;
+
+   $self->{data}->{$field} = $data;
+
+   $self->_sync;
+
+   return 1;
+}   # set_field
+
+#
+# Internal method _sync
+#
+# This will hold the metadata in sync with the single elements
+#
 
 sub _sync
 {
    my $self = shift;
 
-   @{$self->{keywords}} = grep {$_} @{$self->{keywords}};
-   $self->{metadata} = "GQview comment (2.1.1)\n\n[keywords]\n" . join("\n", @{$self->{keywords}}) . (@{$self->{keywords}} ? "\n" : "") . "\n[comment]\n" . $self->{comment} . ($self->{comment} =~ /\n$/ ? "" : "\n") . ($self->{comment} ? "\n" : "") . "#end\n";
-} # _sync
+   $self->{metadata} = "GQview comment (2.0.0)\n\n";
 
-sub _error
-{
-   my $self = shift;
-   my $ret = shift;
-   my $msg = shift;
+   foreach my $field (@{$self->{fields}})
+   {
+      my $data = $self->{data}->{$field} || "";
+      $data =~ s/\n*\z/\n\n/s;
+      $self->{metadata} .= "[$field]\n" . $data;
+   }
 
-   $self->{error} = $msg;
+   $self->{metadata} .= "#end\n";
 
-   return $ret;
-} # _error
+   return 1;
+}   # _sync
 
 1;
 
 __END__
 
-=head1 NAME
+=back
 
-Image::MetaData::GQview - Perl extension for GQview image metadata
+=head1 BUGS
 
-=head1 SYNOPSIS
+Please report any bugs or feature requests to
+C<bug-image-metadata-gqview at rt.cpan.org>, or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Image-MetaData-GQview>.
+I will be notified, and then you'll automatically be notified of progress on
+your bug as I make changes.
 
-  use Image::MetaData::GQview;
-  my $md = Image::MetaData::GQview->new("test.jpg");
-  $md->load("test.jpg");
-  my $comment = $md->comment;
-  my @keywords = $md->keywords;
-  my $raw = $md->raw;
-  $md->comment("This is a comment");
-  $md->keywords(@keywords);
-  $md->save("test.jpg");
+=head1 SUPPORT
 
-=head1 DESCRIPTION
+You can find documentation for this module with the perldoc command.
 
-This module is a abstraction to the image meta data of GQview.
+   perldoc Image::MetaData::GQview
 
-=head2 METHODS
+You can also look for information at:
 
-=over
+=over 4
 
-=item new
+=item * AnnoCPAN: Annotated CPAN documentation
 
-This is a class method and the only one. It is used to get a object of Image::MetaData::GQview. It can be called without parameter or with the image as only option in witch case it try to load the meta data.
+L<http://annocpan.org/dist/Image-MetaData-GQview>
 
-=item load
+=item * CPAN Ratings
 
-If you didn't load the data with new you can do that with this method. If the parameter is left out the one setted before is used.
+L<http://cpanratings.perl.org/d/Image-MetaData-GQview>
 
-=item comment
+=item * RT: CPAN's request tracker
 
-Get or set the comment.
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Image-MetaData-GQview>
 
-=item keywords
+=item * Search CPAN
 
-Get or set the keywords.
-
-=item raw
-
-Get the raw data
-
-=item save
-
-Save the data to disk. This will read the location from the gqview configuration. If there is none, the info will be saved in local directory.
+L<http://search.cpan.org/dist/Image-MetaData-GQview>
 
 =back
 
 =head1 SEE ALSO
 
-Manpage of gqview
+   man qview
 
-=head1 AUTHOR
-
-S<Klaus Ethgen E<lt>Klaus@Ethgen.deE<gt>>
-
-=head1 COPYRIGHT
+=head1 COPYRIGHT & LICENSE
 
 Copyright (c) 2006 by Klaus Ethgen. All rights reserved.
-
-=head1 LICENSE
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

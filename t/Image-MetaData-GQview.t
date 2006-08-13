@@ -1,32 +1,38 @@
-#! /usr/bin/perl -T
+#!perl -T
 #
-# $Id: Image-MetaData-GQview.t,v 1.1 2006/08/08 22:55:30 klaus Exp $
+# $Id: Image-MetaData-GQview.t,v 1.3 2006/08/13 14:52:26 klaus Exp $
 #
 
-use Test::More 'no_plan';
-BEGIN { use_ok('Image::MetaData::GQview') };
+use Test::More tests => 10;
 
-#########################
+use Image::MetaData::GQview;
 
-my $md = Image::MetaData::GQview->new;
+my $md = eval {Image::MetaData::GQview->new};
+ok(!$@, "Instanting the class");
 ok(defined $md, "new");
 isa_ok($md,'Image::MetaData::GQview');
 is($md->{error}, undef, "error with new");
 
-[ -e "test.jpg" ] && unlink "test.jpg";
-$md->load("test.jpg");
-isnt($md->{error}, undef, "error with load");
-
 # Now create a testfile and a dir...
-open my $file, ">", "test.jpg";
+-e 'test.jpg' and unlink 'test.jpg';
+open my $file, ">", 'test.jpg';
 print $file "\n";
 close $file;
 
-$md->comment("This is a comment");
-is($md->{error}, undef);
-$md->keywords(qw(foo bar));
-is($md->{error}, undef);
+eval {$md->comment("This is a comment")};
+ok(!$@, "Setting comment ($@)");
+eval {$md->keywords(qw(foo bar))};
+ok(!$@, "Setting Keywords ($@)");
 
-my $res = $md->save("test.jpg", ".metadata/test.jpg.meta");
-ok($res, 'save("test.jpg", ".metadata/test.jpg.meta")');
-is($md->{error}, undef, "error with save");
+ok(eval {$md->save('test.jpg', 'test.jpg.meta')}, 'save("test.jpg", ".metadata/test.jpg.meta")');
+ok(!$@, "Save ($@)");
+
+eval {$md->load('test.jpg', 'test.jpg.meta')};
+ok(!$@, "Load a file ($@)");
+
+# Clean up ...
+-e 'test.jpg' and unlink 'test.jpg';
+-e 'test.jpg.meta' and unlink 'test.jpg.meta';
+
+eval {$md->load('test.jpg')};
+ok($@, "Load a (not existing) file (should give an error ($@))");

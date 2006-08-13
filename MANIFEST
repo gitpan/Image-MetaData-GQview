@@ -1,7 +1,11 @@
 Changes
-Makefile.PL
 MANIFEST
+Makefile.PL
 README
-t/Image-MetaData-GQview.t
 lib/Image/MetaData/GQview.pm
+t/00-load.t
+t/boilerplate.t
+t/pod-coverage.t
+t/pod.t
+t/Image-MetaData-GQview.t
 META.yml                                 Module meta-data (added by MakeMaker)
