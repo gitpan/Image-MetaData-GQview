@@ -38,29 +38,10 @@ All internal errors will trow an error!
 
 =cut
 
-# Use the following for perltidy:
-#-i=3	# Indent 3
-#-pt=2	# Klammerhandling
-#-sbt=2	# Klammerhandling
-#-bt=2	# Klammerhandling
-#-ci=3	# Indent bei mehrzeiligen Zeilen
-#-isbc	# Indent nur schon eingerückte Kommentare
-#-olc	# Lange Blockkommentare haben keinen Indent
-#-nolq	# Kein Indent bei langen Quotes entfernen
-#-nbbb	# Keine Leerzeilen vor Blöcken
-#-cti=1	# Schliesende Klammer in Höhe der öffnenden
-#-bl	# Öffnende Klammern in neuer Zeile
-#-et=8	# Komprimiere 8 Space zu einem Tab
-#-se	# Fehler auf STDERR
-#-w	# Warnings als Error
-#-syn	# Check Syntax
-#-msc=3	# Kommentarabstand
-#-nsfs	# Kein Space vor Semikolon
-
 use vars qw($RCS_VERSION $VERSION);
 
-$RCS_VERSION = '$Id: GQview.pm,v 1.7 2006/08/13 16:38:53 klaus Exp $';
-($VERSION = '$Revision: 1.7 $') =~ s/^\D*([\d.]*)\D*$/$1/;
+$RCS_VERSION = '$Id: GQview.pm,v 1.8 2006/12/23 20:24:06 klaus Exp $';
+($VERSION = '$Revision: 1.8 $') =~ s/^\D*([\d.]*)\D*$/$1/;
 
 =item new
 
@@ -98,7 +79,7 @@ sub new
    $self->load($file) if $file;
 
    return $self;
-}   # new
+} ## end sub new
 
 =item load
 
@@ -127,7 +108,7 @@ sub load
 
       $metafile = $metadata1 if -r $metadata1;
       $metafile ||= $metadata2 if -r $metadata2;
-   }
+   } ## end unless ($metafile)
    $self->{metafile} = $metafile;
 
    croak("No metadata found for image '$image'!") unless $metafile;
@@ -161,7 +142,7 @@ sub load
    $self->{data} = \%fields;
 
    return 1;
-}   # load
+} ## end sub load
 
 =item comment
 
@@ -174,10 +155,11 @@ sub comment
    my $self    = shift;
    my $comment = shift;
 
+   $comment =~ s/^\[/ [/mg;
    $self->set_field('comment', $comment) if $comment;
 
    return scalar($self->get_field('comment'));
-}   # comment
+} ## end sub comment
 
 =item keywords
 
@@ -191,10 +173,10 @@ sub keywords
 
    $self->set_field('keywords', @_) if @_;
 
-   my @keywords = grep { $_ } $self->get_field('keywords');
+   my @keywords = grep {$_} $self->get_field('keywords');
 
    return @keywords;
-}   # keywords
+} ## end sub keywords
 
 =item raw
 
@@ -207,7 +189,7 @@ sub raw
    my $self = shift;
 
    return $self->{metadata};
-}   # raw
+}
 
 =item save
 
@@ -248,9 +230,9 @@ sub save
 	    $metadata = ($1 eq "true") ? $metadata1 : $metadata2;
 	    last;
 	 }
-      }
+      } ## end while (my $line = <$in>)
       close $in;
-   }   # if (open my $in, "<", $ENV...
+   } ## end if (open my $in, "<", ...
    if ($newimage and not $newmetafile)
    {
       $metafile = $metadata;
@@ -268,7 +250,7 @@ sub save
 	 $false = 1;
 	 last;
       }
-   }
+   } ## end while (@metadirs)
    if ($false and not $newmetafile and $metafile ne $metadata2)
    {
       $false    = 0;
@@ -284,19 +266,23 @@ sub save
 	    $false = 1;
 	    last;
 	 }
-      }
-   }   # if ($false and not $newmetafil...
+      } ## end while (@metadirs)
+   } ## end if ($false and not $newmetafile...
    croak("Cannot create directory structure for meta file '$metafile'!")
       if ($false);
-   open my $meta, ">:utf8", $metafile;
-   print $meta $self->raw or die("Faulty metadata");
-   close $meta;
+   $self->_sync;
+   if ($self->raw)
+   {
+      open my $meta, ">:utf8", $metafile;
+      print $meta $self->raw or die("Faulty metadata");
+      close $meta;
+   } ## end if ($self->raw)
 
    $self->{imagefile} = $image;
    $self->{metafile}  = $metafile;
 
    return 1;
-}   # save
+} ## end sub save
 
 =item get_field
 
@@ -311,7 +297,7 @@ sub get_field
    my $self  = shift;
    my $field = shift
       || croak(
-      "get_field has to be called with a field as the first parameter");
+	      "get_field has to be called with a field as the first parameter");
 
    croak(
       "get_field has to be called with a known field '$field' as first parameter"
@@ -321,7 +307,7 @@ sub get_field
    $data =~ s/\n*\z//;
 
    return wantarray ? split(/\n/, $data) : "$data\n";
-}   # get_field
+} ## end sub get_field
 
 =item set_field
 
@@ -338,7 +324,7 @@ sub set_field
    my $self  = shift;
    my $field = shift
       || croak(
-      "set_field has to be called with a field as the first parameter");
+	      "set_field has to be called with a field as the first parameter");
 
    croak(
       "set_field has to be called with a known field '$field' }as first parameter"
@@ -352,7 +338,7 @@ sub set_field
    $self->_sync;
 
    return 1;
-}   # set_field
+} ## end sub set_field
 
 #
 # Internal method _sync
@@ -364,19 +350,20 @@ sub _sync
 {
    my $self = shift;
 
-   $self->{metadata} = "GQview comment (2.0.0)\n\n";
+   $self->{metadata} = "#GQview comment (2.0.0)\n\n";
 
    foreach my $field (@{$self->{fields}})
    {
       my $data = $self->{data}->{$field} || "";
       $data =~ s/\n*\z/\n\n/s;
+      $data =~ "\n" if $data eq "\n\n";
       $self->{metadata} .= "[$field]\n" . $data;
-   }
+   } ## end foreach my $field (@{$self->...
 
    $self->{metadata} .= "#end\n";
 
    return 1;
-}   # _sync
+} ## end sub _sync
 
 1;
 
