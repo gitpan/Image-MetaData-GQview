@@ -40,8 +40,8 @@ All internal errors will trow an error!
 
 use vars qw($RCS_VERSION $VERSION);
 
-$RCS_VERSION = '$Id: GQview.pm,v 1.8 2006/12/23 20:24:06 klaus Exp $';
-($VERSION = '$Revision: 1.8 $') =~ s/^\D*([\d.]*)\D*$/$1/;
+$RCS_VERSION = '$Id: GQview.pm,v 1.9 2006/12/23 21:42:05 klaus Exp $';
+($VERSION = '$Revision: 1.9 $') =~ s/^\D*([\d.]*)\D*$/$1/;
 
 =item new
 
@@ -155,7 +155,7 @@ sub comment
    my $self    = shift;
    my $comment = shift;
 
-   $comment =~ s/^\[/ [/mg;
+   $comment =~ s/^\[/ [/mg if $comment;
    $self->set_field('comment', $comment) if $comment;
 
    return scalar($self->get_field('comment'));

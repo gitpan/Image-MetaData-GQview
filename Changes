@@ -2,6 +2,10 @@ Revision history for Image::MetaData::GQview
 
 1.8 Klaus Ethgen <Klaus@Ethgen.de>
 
+	* Hmpf, making the comment silent again
+
+1.8 Klaus Ethgen <Klaus@Ethgen.de>
+
 	* Making comment section more robust (Escape '[')
 	* Add a comment char for the start comment
 
