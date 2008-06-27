@@ -6,6 +6,8 @@ use warnings;
 use Carp;
 use Fatal qw(:void open close);
 use Cwd qw(abs_path);
+# FreeBSE has a arcgaic perl build without PerlIO
+use PerlIO;
 
 =head1 NAME
 
@@ -40,8 +42,8 @@ All internal errors will trow an error!
 
 use vars qw($RCS_VERSION $VERSION);
 
-$RCS_VERSION = '$Id: GQview.pm,v 1.9 2006/12/23 21:42:05 klaus Exp $';
-($VERSION = '$Revision: 1.9 $') =~ s/^\D*([\d.]*)\D*$/$1/;
+$RCS_VERSION = '$Id: GQview.pm,v 1.10 2008-06-27 09:41:36 klaus Exp $';
+($VERSION = '$Revision: 1.10 $') =~ s/^\D*([\d.]*)\D*$/$1/;
 
 =item new
 
