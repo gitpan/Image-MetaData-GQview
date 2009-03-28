@@ -1,6 +1,6 @@
 #!perl -T
 #
-# $Id: boilerplate.t,v 1.1 2006/08/12 18:58:27 klaus Exp $
+# $Id$
 #
 
 use strict;

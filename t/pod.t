@@ -1,6 +1,6 @@
 #!perl -T
 #
-# $Id: pod.t,v 1.1 2006/08/12 18:58:27 klaus Exp $
+# $Id$
 #
 
 use Test::More;

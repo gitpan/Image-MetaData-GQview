@@ -1,6 +1,6 @@
 #!perl -T
 #
-# $Id: Image-MetaData-GQview.t,v 1.5 2006/08/13 16:38:53 klaus Exp $
+# $Id$
 #
 
 use Test::More tests => 13;

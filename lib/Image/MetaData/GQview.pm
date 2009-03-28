@@ -1,12 +1,14 @@
 package Image::MetaData::GQview;
 
 use strict;
-use warnings;
 
+#use warnings;
+## no critic (RequireUseWarnings);
+
+use 5.008000;
 use Carp;
 use Fatal qw(:void open close);
 use Cwd qw(abs_path);
-# FreeBSE has a arcgaic perl build without PerlIO
 use PerlIO;
 
 =head1 NAME
@@ -16,7 +18,7 @@ Image::MetaData::GQview - Perl extension for GQview image metadata
 =head1 SYNOPSIS
 
    use Image::MetaData::GQview;
- 
+
    my $md = Image::MetaData::GQview->new("test.jpg");
    my $md2 = Image::MetaData::GQview->new("test2.jpg", {fields => ['keywords', 'comment', 'picture info']});
    my $md3 = Image::MetaData::GQview->new({file => "test2.jpg", fields => ['keywords', 'comment', 'picture info']});
@@ -40,10 +42,7 @@ All internal errors will trow an error!
 
 =cut
 
-use vars qw($RCS_VERSION $VERSION);
-
-$RCS_VERSION = '$Id: GQview.pm,v 1.10 2008-06-27 09:41:36 klaus Exp $';
-($VERSION = '$Revision: 1.10 $') =~ s/^\D*([\d.]*)\D*$/$1/;
+use version; our $VERSION = qv("v2.0.0");
 
 =item new
 
@@ -116,7 +115,7 @@ sub load
    croak("No metadata found for image '$image'!") unless $metafile;
 
    open my $in, "<:utf8", $metafile;
-   $self->{metadata} = do { local $/ = undef; <$in> };
+   $self->{metadata} = eval { local $/ = undef; <$in> };
    close $in;
 
    # Aufbau:
@@ -134,7 +133,7 @@ sub load
 
    # trow away the head
    shift @fields_ext;
-   die "Internal Error: Metadata are not parsable" if (@fields_ext % 2) != 0;
+   die "Internal Error: Metadata are not parsable" if (@fields_ext % 2) != 0; ## no critic (RequireCarping);
 
    # Cleanup the last field if it exists
    $fields_ext[-1] =~ s/\n*#end\n?\z/\n/ if @fields_ext > 0;
@@ -169,7 +168,7 @@ Get or set the keywords. This is the preferred method for the keywords as it shi
 
 =cut
 
-sub keywords
+sub keywords ## no critic (RequireArgUnpacking);
 {
    my $self = shift;
 
@@ -221,7 +220,7 @@ sub save
    my $metadata;
 
    # Read the gqviewrc
-   if (open my $in, "<", $ENV{HOME} . "/.gqview/gqviewrc")
+   if (open my $in, "<", $ENV{HOME} . "/.gqview/gqviewrc") ## no critic (RequireBriefOpen);
    {
       while (my $line = <$in>)
       {
@@ -270,13 +269,12 @@ sub save
 	 }
       } ## end while (@metadirs)
    } ## end if ($false and not $newmetafile...
-   croak("Cannot create directory structure for meta file '$metafile'!")
-      if ($false);
+   croak("Cannot create directory structure for meta file '$metafile'!") if ($false);
    $self->_sync;
    if ($self->raw)
    {
       open my $meta, ">:utf8", $metafile;
-      print $meta $self->raw or die("Faulty metadata");
+      print $meta $self->raw or die("Faulty metadata"); ## no critic (RequireCarping);
       close $meta;
    } ## end if ($self->raw)
 
@@ -297,13 +295,9 @@ Please note, it array context also empty lines can be returned!
 sub get_field
 {
    my $self  = shift;
-   my $field = shift
-      || croak(
-	      "get_field has to be called with a field as the first parameter");
+   my $field = shift || croak("get_field has to be called with a field as the first parameter");
 
-   croak(
-      "get_field has to be called with a known field '$field' as first parameter"
-   ) unless grep (/^\Q$field\E$/s, @{$self->{fields}});
+   croak("get_field has to be called with a known field '$field' as first parameter") unless grep {/^\Q$field\E$/s} @{$self->{fields}};
 
    my $data = $self->{data}->{$field} || "";
    $data =~ s/\n*\z//;
@@ -321,16 +315,12 @@ The data can be a single value or a array.
 
 =cut
 
-sub set_field
+sub set_field ## no critic (RequireArgUnpacking);
 {
    my $self  = shift;
-   my $field = shift
-      || croak(
-	      "set_field has to be called with a field as the first parameter");
+   my $field = shift || croak("set_field has to be called with a field as the first parameter");
 
-   croak(
-      "set_field has to be called with a known field '$field' }as first parameter"
-   ) unless grep (/^\Q$field\E$/s, @{$self->{fields}});
+   croak("set_field has to be called with a known field '$field' }as first parameter") unless grep {/^\Q$field\E$/s} @{$self->{fields}};
 
    my $data = join("\n", @_);
    $data =~ s/\n*\z/\n/;
@@ -358,7 +348,7 @@ sub _sync
    {
       my $data = $self->{data}->{$field} || "";
       $data =~ s/\n*\z/\n\n/s;
-      $data =~ "\n" if $data eq "\n\n";
+      $data = "\n" if $data eq "\n\n";
       $self->{metadata} .= "[$field]\n" . $data;
    } ## end foreach my $field (@{$self->...
 
@@ -380,6 +370,10 @@ C<bug-image-metadata-gqview at rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Image-MetaData-GQview>.
 I will be notified, and then you'll automatically be notified of progress on
 your bug as I make changes.
+
+=head1 INCOMPATIBILITIES
+
+The module cannot be used under non unixoid systems like windows. But there is no need for this module anyway as the tool gqview is only available on unixoid systems.
 
 =head1 SUPPORT
 
@@ -413,9 +407,13 @@ L<http://search.cpan.org/dist/Image-MetaData-GQview>
 
    man qview
 
-=head1 COPYRIGHT & LICENSE
+=head1 AUTHOR
 
-Copyright (c) 2006 by Klaus Ethgen. All rights reserved.
+Klaus Ethgen <Klaus@Ethgen.de>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2006-2009 by Klaus Ethgen. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
